@@ -187,7 +187,6 @@ Duration will start when license login.
 # ======================
 # REVOKE COMMAND
 # ======================
-
 def revoke(update: Update, context: CallbackContext):
 
     if not is_owner(update):
@@ -214,9 +213,38 @@ STATUS: DISABLED
         update.message.reply_text(f"❌ Error: {e}")
 
 # ======================
+# RESET COMMAND
+# ======================
+def reset(update: Update, context: CallbackContext):
+    if not is_owner(update):
+        return
+
+    if not context.args:
+        update.message.reply_text("Usage:\n/reset KEY")
+        return
+
+    key = context.args[0]
+
+    try:
+        # Kakantigin nito ang bagong /reset link sa Render Panel mo
+        r = requests.get(f"{PANEL_URL}/reset?key={key}", timeout=15)
+        if r.status_code == 200:
+            update.message.reply_text(f"""
+🔄 𝗞𝗘𝗬 𝗗𝗘𝗩𝗜𝗖𝗘 𝗥𝗘𝗦𝗘𝗧
+
+KEY: `{key}`
+STATUS: UNLOCKED (Ready for new device)
+""", parse_mode="Markdown")
+        elif r.status_code == 404:
+            update.message.reply_text("❌ Key not found in database.")
+        else:
+            update.message.reply_text("❌ Failed to reset key device.")
+    except Exception as e:
+        update.message.reply_text(f"❌ Error: {e}")
+        
+# ======================
 # LIST KEYS
 # ======================
-
 def listkeys(update: Update, context: CallbackContext):
 
     if not is_owner(update):
@@ -240,7 +268,6 @@ def listkeys(update: Update, context: CallbackContext):
 # ======================
 # STATS COMMAND
 # ======================
-
 def stats(update: Update, context: CallbackContext):
 
     if not is_owner(update):
@@ -264,7 +291,6 @@ Expired Keys: {data['expired_keys']}
 # ======================
 # MAIN
 # ======================
-
 def main():
 
     updater=Updater(BOT_TOKEN,use_context=True)
@@ -274,6 +300,7 @@ def main():
     dp.add_handler(CommandHandler("revoke",revoke))
     dp.add_handler(CommandHandler("list",listkeys))
     dp.add_handler(CommandHandler("stats",stats))
+    dp.add_handler(CommandHandler("reset", reset))
     dp.add_handler(CallbackQueryHandler(button))
 
     updater.start_polling()
